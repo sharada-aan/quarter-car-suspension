@@ -405,4 +405,165 @@ axs[1, 1].legend()
 axs[1, 1].grid(True)
 
 plt.tight_layout()
+
+figures_folder = project_root / "figures"
+figures_folder.mkdir(exist_ok=True)
+
+figure_path = figures_folder / "performance_metrics.png"
+plt.savefig(figure_path, dpi=300, bbox_inches='tight')
+
+print(f"Figure saved to: {figure_path}")
+
+plt.show()
+
+
+# ============================================================
+# PARETO-OPTIMAL CONFIGURATIONS
+# ============================================================
+
+pareto_results = []
+
+for candidate in results:
+    is_dominated = False
+
+    for other in results:
+        if (
+            other['rms_body_acceleration'] <= candidate['rms_body_acceleration']
+            and
+            other['max_suspension_travel'] <= candidate['max_suspension_travel']
+            and
+            (
+                other['rms_body_acceleration'] < candidate['rms_body_acceleration']
+                or
+                other['max_suspension_travel'] < candidate['max_suspension_travel']
+            )
+        ):
+            is_dominated = True
+            break
+
+    if not is_dominated:
+        pareto_results.append(candidate)
+
+print("\nPareto-Optimal Configurations")
+print("--------------------------------")
+
+for result in pareto_results:
+    print(
+        f"k1 = {result['k1']:.0f} N/m, "
+        f"ζ1 = {result['zeta1']:.2f}, "
+        f"RMS acceleration = {result['rms_body_acceleration']:.4f} m/s², "
+        f"Max suspension travel = {result['max_suspension_travel']:.4f} m"
+    )
+
+# ============================================================
+# SAVE PARETO RESULTS TO CSV
+# ============================================================
+
+pareto_csv_path = data_folder / "pareto_optimal.csv"
+
+with open(pareto_csv_path, 'w', newline='') as csv_file:
+    writer = csv.DictWriter(
+        csv_file,
+        fieldnames=fieldnames
+    )
+
+    writer.writeheader()
+    writer.writerows(pareto_results)
+
+print(f"\nPareto results saved to: {pareto_csv_path}")
+
+# ============================================================
+# COMFORT VS. SUSPENSION CONTROL
+# ============================================================
+
+rms_acceleration = [
+    result['rms_body_acceleration']
+    for result in results
+]
+
+suspension_travel = [
+    result['max_suspension_travel']
+    for result in results
+]
+
+plt.figure(figsize=(9, 7))
+
+# Plot all 25 configurations
+plt.scatter(
+    rms_acceleration,
+    suspension_travel,
+    label='All configurations'
+)
+
+# Plot Pareto-optimal configurations
+pareto_rms = [
+    result['rms_body_acceleration']
+    for result in pareto_results
+]
+
+pareto_travel = [
+    result['max_suspension_travel']
+    for result in pareto_results
+]
+
+# Sort Pareto points by RMS acceleration
+pareto_sorted = sorted(
+    pareto_results,
+    key=lambda result: result['rms_body_acceleration']
+)
+
+pareto_rms_sorted = [
+    result['rms_body_acceleration']
+    for result in pareto_sorted
+]
+
+pareto_travel_sorted = [
+    result['max_suspension_travel']
+    for result in pareto_sorted
+]
+
+plt.plot(
+    pareto_rms_sorted,
+    pareto_travel_sorted,
+    linestyle='--',
+    label='Pareto front'
+)
+
+plt.scatter(
+    pareto_rms,
+    pareto_travel,
+    s=80,
+    label='Pareto-optimal'
+)
+
+# Label Pareto-optimal configurations
+for result in pareto_results:
+    plt.annotate(
+        f"k={result['k1']/1000:.1f}k, ζ={result['zeta1']:.2f}",
+        (
+            result['rms_body_acceleration'],
+            result['max_suspension_travel']
+        ),
+        xytext=(6, 6),
+        textcoords='offset points',
+        fontsize=9
+    )
+
+plt.xlabel('RMS Body Acceleration (m/s²)')
+plt.ylabel('Maximum Suspension Travel (m)')
+plt.title('Ride Comfort vs. Suspension Control')
+plt.legend()
+plt.grid(True)
+
+plt.tight_layout()
+
+figure_path = figures_folder / "comfort_vs_control.png"
+plt.savefig(
+    figure_path,
+    dpi=300,
+    bbox_inches='tight'
+)
+
+print(f"Figure saved to: {figure_path}")
+
 plt.show()
