@@ -37,6 +37,9 @@
 # c1 = 2*zeta1*sqrt(k1*m1)
 # ============================================================
 
+import csv
+from pathlib import Path
+
 import numpy as np
 import matplotlib.pyplot as plt
 from numpy import cos, pi
@@ -297,6 +300,36 @@ for k1 in k1_values:
             'settling_time': settling_time,
             'max_suspension_travel': max_suspension_travel
         })
+
+# ============================================================
+# SAVE RESULTS TO CSV
+# ============================================================
+
+project_root = Path(__file__).resolve().parents[1]
+data_folder = project_root / "data"
+data_folder.mkdir(exist_ok=True)
+
+csv_path = data_folder / "parameter_sweep.csv"
+
+fieldnames = [
+    'k1',
+    'zeta1',
+    'max_body_displacement',
+    'rms_body_acceleration',
+    'settling_time',
+    'max_suspension_travel'
+]
+
+with open(csv_path, 'w', newline='') as csv_file:
+    writer = csv.DictWriter(
+        csv_file,
+        fieldnames=fieldnames
+    )
+
+    writer.writeheader()
+    writer.writerows(results)
+
+print(f"\nResults saved to: {csv_path}")
 
 # ============================================================
 # PRINT RESULTS
