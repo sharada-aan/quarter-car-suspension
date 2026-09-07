@@ -156,6 +156,7 @@ quarter-car-suspension/
 │   ├── performance_metrics.png
 │   └── comfort_vs_control.png
 └── report/
+    └── suspension_dynamics_report.md
 ```
 
 ## Tools
